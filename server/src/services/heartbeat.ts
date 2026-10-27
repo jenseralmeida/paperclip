@@ -256,7 +256,7 @@ import {
 } from "./native-local-process-stop.js";
 
 import {
-  CONTROLLER_LEASE_LOST_FAILURE_CODE,
+  isControllerLeaseLostRun,
   legacyControllerBootId,
   watchLegacyControllerLease,
 } from "./legacy-controller-lease.js";
@@ -982,7 +982,7 @@ export function heartbeatService(
     // attempt cannot be retried again through this lane.
     // A lost controller lease or a sign-in the user must restore is not a spent budget: the task waits, it is not blocked.
     transientRetryBudgetSpent: (run) =>
-      run.errorCode !== CONTROLLER_LEASE_LOST_FAILURE_CODE &&
+      !isControllerLeaseLostRun(run) &&
       run.errorCode !== "claude_auth_required" &&
       executionFailureRetryCount(run) >=
       BOUNDED_TRANSIENT_HEARTBEAT_RETRY_MAX_ATTEMPTS,

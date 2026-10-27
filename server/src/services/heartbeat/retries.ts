@@ -17,7 +17,7 @@ import {
   accountingForScheduledRetry,
 } from "../execution-recovery-attempt.js";
 import { WORKSPACE_GIT_SCAN_ERROR_CODES } from "../workspace-git-operation-scheduler.js";
-import { CONTROLLER_LEASE_LOST_FAILURE_CODE } from "../legacy-controller-lease.js";
+import { isControllerLeaseLostRun } from "../legacy-controller-lease.js";
 import { randomUUID } from "node:crypto";
 import {
   and,
@@ -347,7 +347,7 @@ function isRetryableInteractionContinuationInfrastructureFailure(
   if (
     run.errorCode === WORKSPACE_VALIDATION_FAILURE_CODE ||
     run.errorCode === "process_lost" ||
-    run.errorCode === CONTROLLER_LEASE_LOST_FAILURE_CODE
+    isControllerLeaseLostRun(run)
   ) {
     return true;
   }
@@ -425,7 +425,7 @@ export function createHeartbeatRetries(db: Db, dependencies: HeartbeatRetryDepen
       run.scheduledRetryReason === reason ? (run.scheduledRetryAttempt ?? 0) : 0;
     // The controller lost its lease because the host stopped (sleep, stall), not because the work failed. Wait
     // longer each time, and never charge the failure budget or give up on the task.
-    if (run.errorCode === CONTROLLER_LEASE_LOST_FAILURE_CODE) {
+    if (isControllerLeaseLostRun(run)) {
       const attempt = laneAttempts(CONTROLLER_LEASE_LOST_RETRY_REASON);
       return {
         ...opts,
@@ -1670,7 +1670,7 @@ export function createHeartbeatRetries(db: Db, dependencies: HeartbeatRetryDepen
   ) {
     if (await hasCaseHandoffForRun(run)) return null;
     if (
-      run.errorCode === CONTROLLER_LEASE_LOST_FAILURE_CODE &&
+      isControllerLeaseLostRun(run) &&
       !isResolvedInteractionContinuationWakeContext(run.contextSnapshot)
     ) {
       return scheduleBoundedRetryForRun(run, agent);
