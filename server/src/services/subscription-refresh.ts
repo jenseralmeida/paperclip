@@ -59,7 +59,7 @@ export function refreshCompanySubscriptions(db: Db, companyId: string, userId: s
       if (row.summary.status !== "connected") continue;
       try {
         const session = await subscriptionSession(db, companyId, row.grant.credentialSecretRefs);
-        const credential = await service.credential(row);
+        const credential = await service.accountCredential(row);
         const input: SubscriptionConnection = { companyId, connectionId: row.connection.id, grantId: row.grant.id,
           provider: row.summary.provider, name: row.connection.name, ownerUserId: row.grant.subjectUserId, credential, session };
         const id = await subscriptionService(db).register(input);
